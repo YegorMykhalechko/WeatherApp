@@ -1,18 +1,33 @@
 <script setup>
 import { ref } from 'vue'
-import { getCities } from '../../api/getCities'
 import _ from 'lodash'
 
+//API
+import { getCities } from '../../api/getCities'
+
+const emit = defineEmits(['getCity'])
+
 const options = ref([])
+const selectedCity = ref(null)
+
+const parseSearch = (cities) => {
+  return cities.map((city) => {
+    return {
+      value: `${city.lat} ${city.lon}`,
+      name: `${city.name}, ${city.country}, ${city.state}`
+    }
+  })
+}
+
 const search = _.debounce(async (searchValue, loading) => {
-  // const res = await getCities(searchValue)
-  // options.value = res.data.data.map((city) => {
-  //   return {
-  //     value: `${city.latitude} ${city.longitude}`,
-  //     name: `${city.name}, ${city.countryCode}`
-  //   }
-  // })
-  loading(false)
+  try {
+    const res = await getCities(searchValue)
+    options.value = parseSearch(res.data)
+  } catch (err) {
+    console.log(err)
+  } finally {
+    loading(false)
+  }
 }, 600)
 
 const onSearch = (searchValue, loading) => {
@@ -21,16 +36,23 @@ const onSearch = (searchValue, loading) => {
     search(searchValue, loading)
   }
 }
+
+const selectCity = () => {
+  emit('getCity', selectedCity.value)
+//   emit('getCity', { name: 'Opole, Pl', value: '50.672222222 17.925277777' })
+}
 </script>
 
 <template>
   <v-select
+    v-model="selectedCity"
+    @search="onSearch"
+    @change="selectCity"
+    :options="options"
+    :filterable="false"
     class="search-bar"
     label="name"
     placeholder="Search you city"
-    :filterable="false"
-    :options="options"
-    @search="onSearch"
   >
     <template slot="no-options"> type to search GitHub repositories.. </template>
     <template slot="option" slot-scope="option">
