@@ -11,7 +11,6 @@ const windowWidth = ref(null)
 onMounted(() => {
   window.addEventListener('resize', checkScreen)
   checkScreen()
-  window.addEventListener('scroll', updateScroll)
 })
 
 const toggleMobileNav = () => {
@@ -28,19 +27,10 @@ const checkScreen = () => {
   mobileNav.value = false
   return
 }
-
-const updateScroll = () => {
-  const scrollPosition = window.scrollY
-  if (scrollPosition > 50) {
-    scrolledNav.value = true
-    return
-  }
-  scrolledNav.value = false
-}
 </script>
 
 <template>
-  <header :class="{ 'scrolled-nav': scrolledNav }">
+  <header>
     <nav>
       <div class="branding">
         <RouterLink to="/" class="logo">
@@ -69,10 +59,8 @@ header {
   background-color: rgba(0, 0, 0, 0.8);
   z-index: 99;
   width: 100%;
-  position: fixed;
   transition: 0.5s ease all;
   color: #fff;
-  top: 0;
 
   nav {
     position: relative;
@@ -83,7 +71,7 @@ header {
     width: 90%;
     margin: 0 auto;
     @media (min-width: 1140px) {
-      max-width: 1140px;
+      max-width: 1200px;
     }
 
     ul,
@@ -178,15 +166,6 @@ header {
     .mobile-nav-enter-to {
       transform: translateX(0);
     }
-  }
-}
-
-.scrolled-nav {
-  background-color: #000;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-
-  nav {
-    padding: 8px 0;
   }
 }
 </style>
