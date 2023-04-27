@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import _ from 'lodash'
 
 //API
-import { getCities } from '../../api/getCities'
+import { getCities } from '../api/getCities'
 
 const emit = defineEmits(['getCity'])
 
@@ -39,7 +39,6 @@ const onSearch = (searchValue, loading) => {
 
 const selectCity = () => {
   emit('getCity', selectedCity.value)
-//   emit('getCity', { name: 'Opole, Pl', value: '50.672222222 17.925277777' })
 }
 </script>
 

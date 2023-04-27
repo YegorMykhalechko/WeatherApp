@@ -4,6 +4,8 @@ import { computed } from 'vue'
 //Icons
 import LogoIcon from './Icons/LogoIcon.vue'
 import BurgerIcon from './Icons/BurgerIcon.vue'
+import PlusIcon from './Icons/PlusIcon.vue'
+import StartIcon from './Icons/StartIcon.vue'
 
 const props = defineProps({
   icon: String
@@ -11,7 +13,9 @@ const props = defineProps({
 
 const icons = {
   logo: LogoIcon,
-  burger: BurgerIcon
+  burger: BurgerIcon,
+  plus: PlusIcon,
+  start: StartIcon
 }
 
 const iconComponent = computed(() => icons[props.icon])

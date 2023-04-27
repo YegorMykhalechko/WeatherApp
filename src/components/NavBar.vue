@@ -39,7 +39,7 @@ const checkScreen = () => {
       </div>
       <ul v-show="!mobile" class="navigation">
         <li><RouterLink to="/" class="link">Home</RouterLink></li>
-        <li><RouterLink to="/" class="link">Favorites</RouterLink></li>
+        <li><RouterLink to="/favorite" class="link">Favorites</RouterLink></li>
       </ul>
       <div class="icon" :class="{ 'icon-active': mobileNav }">
         <BaseIcon @click="toggleMobileNav" v-show="mobile" icon="burger" alt="burger" />
@@ -47,7 +47,7 @@ const checkScreen = () => {
       <Transition name="mobile-nav">
         <ul v-show="mobileNav" class="dropdown-nav">
           <li><RouterLink to="/" class="link">Home</RouterLink></li>
-          <li><RouterLink to="/" class="link">Favorites</RouterLink></li>
+          <li><RouterLink to="/favorite" class="link">Favorites</RouterLink></li>
         </ul>
       </Transition>
     </nav>

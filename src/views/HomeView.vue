@@ -1,123 +1,161 @@
 <script setup>
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
+import { notify } from '@kyvg/vue3-notification'
 
 //API
 import { getWeatherData } from '../api/getWeather'
 import { getForecastData } from '../api/getForecast'
+import { getIpData } from '../api/getIp'
 
 //Components
-import SearchCity from '../components/HomeComponents/SearchCity.vue'
+import SearchCity from '../components/SearchCity.vue'
+import BaseCard from '../components/Cards/BaseCard.vue'
+import BaseIcon from '../components/IconVue/BaseIcon.vue'
+import BaseModal from '../components/Modals/BaseModal.vue'
+import BaseButton from '../components/UI/BaseButton.vue'
 
 const currentWeather = ref(null)
 const currentForecast = ref(null)
+const currentDataWeather = ref(null)
+const dataWeathers = ref([])
+const showModal = ref(false)
+const showInformModal = ref(false)
 
-const setData = async (lat, lon, city) => {
+//Get Weather IP
+onMounted(async () => {
+  try {
+    const res = await getIpData()
+    const lat = res.data.latitude
+    const lon = res.data.longitude
+    const city = res.data.city
+    await setCurrentData(lat, lon, city)
+  } catch (err) {
+    console.log(err)
+  }
+})
+
+const setCurrentData = async (lat, lon, city) => {
   try {
     const resWeather = await getWeatherData(lat, lon, city)
     currentWeather.value = resWeather.data
 
     const resForecast = await getForecastData(lat, lon, city)
     currentForecast.value = resForecast.data
+
+    currentDataWeather.value = { ...currentWeather.value, ...currentForecast.value }
   } catch (err) {
     console.log(err)
   }
 }
 
-const getCityData = async (data) => {
-  const [lat, lon] = data.value.split(' ')
-  const city = data.name
+const setNewData = async (lat, lon, city) => {
+  try {
+    const resWeather = await getWeatherData(lat, lon, city)
+    const resForecast = await getForecastData(lat, lon, city)
 
-  await setData(lat, lon, city)
+    const weather = { ...resWeather.data, ...resForecast.data }
+
+    const isDuplicateCity = dataWeathers.value.some((el) => {
+      return el.id === weather.id
+    })
+
+    if (!isDuplicateCity) {
+      dataWeathers.value.unshift(weather)
+    }
+
+    if (isDuplicateCity) {
+      notify({
+        title: 'Oooops',
+        text: 'This city has already been added',
+        type: 'error',
+        duration: 3000
+      })
+      showModal.value = false
+    }
+
+    if (dataWeathers.value.length >= 5) {
+      notify({
+        title: 'Oooops',
+        text: 'Max 5 cities',
+        type: 'error',
+        duration: 3000
+      })
+      showModal.value = false
+    }
+  } catch (err) {
+    console.log(err)
+  }
 }
 
-const dateBuilder = () => {
-  let newDate = new Date()
-  let months = [
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December'
-  ]
-  let days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+const parseSearch = (data) => {
+  const [lat, lon] = data.value.split(' ')
+  const city = data.name
+  return [lat, lon, city]
+}
 
-  let day = days[newDate.getDay()]
-  let date = newDate.getDate()
-  let month = months[newDate.getMonth()]
-  let year = newDate.getFullYear()
+const getCurrentCityData = async (data) => {
+  const [lat, lon, city] = parseSearch(data)
 
-  return `${day} ${date} ${month} ${year}`
+  await setCurrentData(lat, lon, city)
+}
+
+const scrollToNewBlock = () => {
+  const element = document.getElementById('newBlock')
+  element.scrollIntoView({ behavior: 'smooth', block: 'end', inline: 'nearest' })
+}
+
+const getNewCityData = async (data) => {
+  const [lat, lon, city] = parseSearch(data)
+
+  await setNewData(lat, lon, city)
+
+  showModal.value = false
+
+  scrollToNewBlock()
+}
+
+const deleteWeatherCard = (data) => {
+  dataWeathers.value = dataWeathers.value.filter((el) => {
+    return el.id !== data
+  })
 }
 </script>
 
 <template>
-  <h1>Hello</h1>
-  <SearchCity @getCity="getCityData" />
-  <div v-if="currentWeather" class="weather-wrap">
-    <div class="location-box">
-      <div class="location">{{ currentWeather?.name }}, {{ currentWeather?.sys?.country }}</div>
-      <div class="date">{{ dateBuilder() }}</div>
-    </div>
-    <div class="weather-box">
-      <div class="temp">{{ Math.round(currentWeather?.main?.temp) }}°C</div>
-      <div class="weather">{{ currentWeather?.weather[0]?.main }}</div>
-    </div>
-  </div>
+  <SearchCity class="mb" @getCity="getCurrentCityData" />
+
+  <BaseCard class="mb" v-if="currentDataWeather" :weather="currentDataWeather"></BaseCard>
+
+  <BaseButton class="mb" @click="showModal = true">
+    <BaseIcon class="plus-icon" icon="plus" />
+  </BaseButton>
+
+  <template v-for="(weather, index) in dataWeathers">
+    <BaseCard
+      @deleteCard="deleteWeatherCard"
+      class="mb"
+      id="newBlock"
+      :key="index"
+      v-if="weather"
+      :weather="weather"
+      :multiple="true"
+    />
+  </template>
+
+  <Transition name="modal">
+    <BaseModal v-if="showModal" @close="showModal = false">
+      <template v-slot:header>
+        <h3>Add new weather block</h3>
+      </template>
+      <template v-slot:body>
+        <SearchCity @getCity="getNewCityData" />
+      </template>
+    </BaseModal>
+  </Transition>
 </template>
 
 <style lang="scss" scoped>
-.weather-wrap {
-  border: 1px solid rgba(0, 0, 0, 0.25);
-  border-radius: 30px;
-  padding: 24px 12px;
-  box-shadow: 1px 2px rgba(0, 0, 0, 0.25);
-  .location-box {
-    text-align: center;
-    .location {
-      color: #000;
-      font-size: 32px;
-      font-weight: 500;
-      text-shadow: 1px 3px rgba(0, 0, 0, 0.25);
-    }
-
-    .date {
-      color: #000;
-      font-size: 20px;
-      font-weight: 300;
-      font-style: italic;
-      text-align: center;
-    }
-  }
-
-  .weather-box {
-    text-align: center;
-    .temp {
-      display: inline-block;
-      padding: 10px 25px;
-      color: #000;
-      font-size: 102px;
-      font-weight: 900;
-      text-shadow: 3px 6px rgba(0, 0, 0, 0.25);
-      background-color: rgba(255, 255, 255, 0.25);
-      border-radius: 16px;
-      margin: 30px 0px;
-      box-shadow: 3px 6px rgba(0, 0, 0, 0.25);
-    }
-
-    .weather {
-      color: #000;
-      font-size: 48px;
-      font-weight: 700;
-      font-style: italic;
-      text-shadow: 3px 6px rgba(0, 0, 0, 0.25);
-    }
-  }
+.search {
+  margin-bottom: 16px;
 }
 </style>
