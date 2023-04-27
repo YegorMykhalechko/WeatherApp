@@ -9,7 +9,7 @@ import BaseButton from '../UI/BaseButton.vue'
 import BaseIcon from '../IconVue/BaseIcon.vue'
 import BaseModal from '../Modals/BaseModal.vue'
 
-const props = defineProps(['weather', 'multiple'])
+const props = defineProps(['weather', 'multiple', 'classic'])
 const emit = defineEmits(['deleteCard'])
 
 const getCitiesStorage = ref([])
@@ -51,7 +51,7 @@ const deleteWeatrherCard = () => {
 
 <template>
   <div v-if="weather" class="weather-wrap" v-bind="$attrs">
-    <div class="action-box">
+    <div class="action-box" v-if="classic">
       <div class="actions">
         <BaseButton v-if="multiple" @click="showConfirmModal = true">Delete</BaseButton>
         <BaseButton @click="toggleFavorites">

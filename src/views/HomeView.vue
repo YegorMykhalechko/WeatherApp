@@ -124,7 +124,12 @@ const deleteWeatherCard = (data) => {
 <template>
   <SearchCity class="mb" @getCity="getCurrentCityData" />
 
-  <BaseCard class="mb" v-if="currentDataWeather" :weather="currentDataWeather"></BaseCard>
+  <BaseCard
+    class="mb"
+    v-if="currentDataWeather"
+    :weather="currentDataWeather"
+    :classic="true"
+  ></BaseCard>
 
   <BaseButton class="mb" @click="showModal = true">
     <BaseIcon class="plus-icon" icon="plus" />
@@ -139,6 +144,7 @@ const deleteWeatherCard = (data) => {
       v-if="weather"
       :weather="weather"
       :multiple="true"
+      :classic="true"
     />
   </template>
 
