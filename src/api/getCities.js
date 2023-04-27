@@ -1,7 +1,9 @@
 import axios from 'axios'
 export function getCities(value) {
   return axios.get(
-    `http://api.openweathermap.org/geo/1.0/direct?q=${value}&limit=5&appid=cb4e0b33dd2d545452a4caf1edf0f78c`,
+    `${import.meta.env.VITE_SERVER_WEATHER_URL}/geo/1.0/direct?q=${value}&limit=5&appid=${
+      import.meta.env.VITE_SERVER_WEATHER_API_KEY
+    }`,
     {
       showLoader: false
     }
