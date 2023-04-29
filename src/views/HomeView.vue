@@ -6,6 +6,7 @@ import { notify } from '@kyvg/vue3-notification'
 import { getWeatherData } from '../api/getWeather'
 import { getForecastData } from '../api/getForecast'
 import { getIpData } from '../api/getIp'
+import axios from 'axios'
 
 //Components
 import SearchCity from '../components/SearchCity.vue'
@@ -13,24 +14,35 @@ import BaseCard from '../components/Cards/BaseCard.vue'
 import BaseIcon from '../components/IconVue/BaseIcon.vue'
 import BaseModal from '../components/Modals/BaseModal.vue'
 import BaseButton from '../components/UI/BaseButton.vue'
+import StepsBar from '../components/StepsBar.vue'
+
+//Store
+import { useWeatherBlocksStore } from '../stores/weatherBlocks'
+
+const store = useWeatherBlocksStore()
 
 const currentWeather = ref(null)
 const currentForecast = ref(null)
 const currentDataWeather = ref(null)
 const dataWeathers = ref([])
 const showModal = ref(false)
-const showInformModal = ref(false)
+const isDefaultStep = ref(true)
 
 //Get Weather IP
 onMounted(async () => {
-  try {
-    const res = await getIpData()
-    const lat = res.data.latitude
-    const lon = res.data.longitude
-    const city = res.data.city
-    await setCurrentData(lat, lon, city)
-  } catch (err) {
-    console.log(err)
+  dataWeathers.value = store.weathersBlocks
+  isDefaultStep.value = store.step
+  currentDataWeather.value = store.currentWeather
+  if (!currentDataWeather.value) {
+    try {
+      const res = await getIpData()
+      const lat = res.data.latitude
+      const lon = res.data.longitude
+      const city = res.data.city
+      await setCurrentData(lat, lon, city)
+    } catch (err) {
+      console.log(err)
+    }
   }
 })
 
@@ -43,6 +55,8 @@ const setCurrentData = async (lat, lon, city) => {
     currentForecast.value = resForecast.data
 
     currentDataWeather.value = { ...currentWeather.value, ...currentForecast.value }
+
+    store.currentWeather = currentDataWeather.value
   } catch (err) {
     console.log(err)
   }
@@ -61,6 +75,7 @@ const setNewData = async (lat, lon, city) => {
 
     if (!isDuplicateCity) {
       dataWeathers.value.unshift(weather)
+      store.weathersBlocks = dataWeathers.value
     }
 
     if (isDuplicateCity) {
@@ -118,6 +133,7 @@ const deleteWeatherCard = (data) => {
   dataWeathers.value = dataWeathers.value.filter((el) => {
     return el.id !== data
   })
+  store.weathersBlocks = dataWeathers.value
 }
 </script>
 
@@ -129,6 +145,7 @@ const deleteWeatherCard = (data) => {
     v-if="currentDataWeather"
     :weather="currentDataWeather"
     :classic="true"
+    :step="isDefaultStep"
   ></BaseCard>
 
   <BaseButton class="mb" @click="showModal = true">
@@ -145,6 +162,7 @@ const deleteWeatherCard = (data) => {
       :weather="weather"
       :multiple="true"
       :classic="true"
+      :step="isDefaultStep"
     />
   </template>
 

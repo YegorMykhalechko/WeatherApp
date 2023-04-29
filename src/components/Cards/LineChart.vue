@@ -1,20 +1,35 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import Chart from 'chart.js/auto'
+import dateBuilder from '../../composables/useBuildDate'
 
-const props = defineProps(['tempPoints', 'id'])
+const props = defineProps(['tempPoints', 'id', 'step'])
 const labels = ref([])
 const temps = ref([])
 
 onMounted(() => {
-  labels.value = props.tempPoints.map((el) => {
-    const [date, time] = el.dt_txt.split(' ')
-    return time
-  })
+  if (props.step) {
+    labels.value = props.tempPoints.map((el) => {
+      const date = new Date(el.dt * 1000)
+      const hours = date.getHours()
+      const minutes = '0' + date.getMinutes()
+      const formattedTime = hours + ':' + minutes.substr(-2)
+      return formattedTime
+    })
 
-  temps.value = props.tempPoints.map((el) => {
-    return el.main.temp
-  })
+    temps.value = props.tempPoints.map((el) => {
+      return Math.round(el.temp)
+    })
+  } else {
+    labels.value = props.tempPoints.map((el) => {
+      const date = new Date(el.dt)
+      return dateBuilder(date)
+    })
+
+    temps.value = props.tempPoints.map((el) => {
+      return Math.round(el.temp.day)
+    })
+  }
 
   const ctx1 = document.getElementById(props.id).getContext('2d')
 
@@ -34,7 +49,7 @@ onMounted(() => {
           tension: 0.4,
           borderWidth: 0,
           pointRadius: 0,
-          borderColor: '#4BB543 ',
+          borderColor: '#4BB543',
           backgroundColor: gradientStroke1,
           borderWidth: 3,
           fill: true,

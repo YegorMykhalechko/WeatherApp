@@ -1,5 +1,5 @@
-const dateBuilder = () => {
-  let newDate = new Date()
+const dateBuilder = (data) => {
+  let newDate = new Date(data * 1000)
   let months = [
     'January',
     'February',

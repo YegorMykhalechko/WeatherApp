@@ -8,13 +8,16 @@ import LineChart from './LineChart.vue'
 import BaseButton from '../UI/BaseButton.vue'
 import BaseIcon from '../IconVue/BaseIcon.vue'
 import BaseModal from '../Modals/BaseModal.vue'
+import SingleCard from './SingleCard.vue'
+import MultipleCard from './MultipleCard.vue'
 
-const props = defineProps(['weather', 'multiple', 'classic'])
+const props = defineProps(['weather', 'multiple', 'classic', 'step'])
 const emit = defineEmits(['deleteCard'])
 
 const getCitiesStorage = ref([])
 const showInfoModal = ref(false)
 const showConfirmModal = ref(false)
+const location = ref(null)
 
 onMounted(() => {
   getCitiesStorage.value = JSON.parse(localStorage.getItem('favorites')) || []
@@ -40,12 +43,40 @@ const toggleFavorites = () => {
     return
   }
 
-  getCitiesStorage.value.push(props.weather)
+  const dataWeathers = {
+    id: props.weather.id,
+    city: props.weather.name + ',' + props.weather.sys.country,
+    lat: props.weather.coord.lat,
+    lon: props.weather.coord.lon
+  }
+
+  getCitiesStorage.value.push(dataWeathers)
   localStorage.setItem('favorites', JSON.stringify(getCitiesStorage.value))
 }
 
 const deleteWeatrherCard = () => {
   emit('deleteCard', props.weather.id)
+}
+
+const points = () => {
+  let dayPoints = []
+  if (props.step) {
+    dayPoints = props.weather.hourly.filter((el) => {
+      const today = new Date()
+      const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000)
+      const firstMomentTomorrow = tomorrow.setHours(0, 0, 0, 0)
+      return new Date(el.dt * 1000) <= new Date(firstMomentTomorrow)
+    })
+  } else {
+    dayPoints = props.weather.daily.slice(0, 5)
+  }
+
+  return dayPoints
+}
+
+const dailyWeathers = () => {
+  location.value = props.weather.name + ',' + props.weather.sys.country
+  return props.weather.daily.slice(0, 5)
 }
 </script>
 
@@ -59,19 +90,16 @@ const deleteWeatrherCard = () => {
         </BaseButton>
       </div>
     </div>
-    <div class="location-box">
-      <div class="location">{{ weather?.name }}, {{ weather?.sys?.country }}</div>
-      <div class="date">{{ useBuildDate() }}</div>
+
+    <SingleCard v-if="weather && step" :weather="weather" />
+
+    <div v-if="dailyWeathers() && !step" class="multiple-wrap">
+      <template v-for="weather in dailyWeathers()">
+        <MultipleCard :weather="weather" :city="location" />
+      </template>
     </div>
-    <div class="weather-box">
-      <div class="temp">{{ Math.round(weather?.main?.temp) }}°C</div>
-      <div class="weather">{{ weather?.weather[0]?.main }}</div>
-    </div>
-    <LineChart
-      v-if="weather?.list"
-      :tempPoints="weather?.list"
-      :id="multiple ? weather?.id : 'canvas'"
-    />
+
+    <LineChart :tempPoints="points()" :id="multiple ? weather?.id : 'canvas'" :step="step" />
   </div>
 
   <Transition name="modal">
@@ -122,45 +150,15 @@ const deleteWeatrherCard = () => {
       }
     }
   }
-  .location-box {
-    text-align: center;
-    .location {
-      color: #000;
-      font-size: 32px;
-      font-weight: 500;
-      text-shadow: 1px 3px rgba(0, 0, 0, 0.25);
-    }
 
-    .date {
-      color: #000;
-      font-size: 20px;
-      font-weight: 300;
-      font-style: italic;
-      text-align: center;
-    }
-  }
+  .multiple-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
 
-  .weather-box {
-    text-align: center;
-    .temp {
-      display: inline-block;
-      padding: 10px 25px;
-      color: #000;
-      font-size: 102px;
-      font-weight: 900;
-      text-shadow: 3px 6px rgba(0, 0, 0, 0.25);
-      background-color: rgba(255, 255, 255, 0.25);
-      border-radius: 16px;
-      margin: 30px 0px;
-      box-shadow: 3px 6px rgba(0, 0, 0, 0.25);
-    }
-
-    .weather {
-      color: #000;
-      font-size: 48px;
-      font-weight: 700;
-      font-style: italic;
-      text-shadow: 3px 6px rgba(0, 0, 0, 0.25);
+    @media only screen and (min-width: 1024px) {
+      flex-direction: row;
     }
   }
 }
