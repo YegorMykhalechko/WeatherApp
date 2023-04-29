@@ -14,7 +14,7 @@ const getFullStep = () => {
 </script>
 
 <template>
-  <div class="container step-box">
+  <div class="step-box">
     <BaseButton :disabled="props.step" @click="getDayStep">Day</BaseButton>
     <BaseButton :disabled="!props.step" @click="getFullStep">5 Days</BaseButton>
   </div>

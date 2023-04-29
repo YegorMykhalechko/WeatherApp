@@ -31,8 +31,8 @@ const forceRerender = () => {
 <template>
   <GlobalLoader v-if="store.$state.loading" />
   <NavBar />
-  <StepsBar @changeStep="changeStep" :step="weatherStore.step" />
   <main class="container" :key="componentKey">
+    <StepsBar @changeStep="changeStep" :step="weatherStore.step" />
     <RouterView />
   </main>
   <notifications position="bottom left" />
